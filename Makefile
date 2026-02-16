@@ -1,12 +1,13 @@
 CC = gcc
 CFLAGS = -g -Wall
 
-TARGET = execFile
+TARGET = HexDump
 
 SOURCES = Main.c HexDump.c
 OBJECTS = $(SOURCES:.c=.o)
 
 all: $(TARGET)
+
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $(TARGET)

@@ -1,5 +1,5 @@
 //**************************** HexDump ****************************************
-//  Copyright (c) 2021 Trenser 
+//  Copyright (c) 2026 Trenser 
 //  All Rights Reserved 
 //***************************************************************************** 
 // 
@@ -13,91 +13,108 @@
  
 //******************************* Include Files ******************************* 
 #include <stdio.h>
-#include <getopt.h>
 #include <stdlib.h>
+#include <getopt.h>
+#include "Main.h"
 #include "HexDump.h"
 //******************************* Local Types ********************************* 
  
 //***************************** Local Constants ******************************* 
- 
+const struct option sLongOptions[] = {
+    {"width",     required_argument, NULL, 'w'},
+    {"size",      required_argument, NULL, 's'},
+    {"offset",    required_argument, NULL, 'o'},
+    {"help",      no_argument,       NULL, 'h'},
+    {NULL, 0, NULL, 0}
+};
 //***************************** Local Variables ******************************* 
  
-//****************************** Local Functions ****************************** 
+//****************************** Local Functions ******************************
+
+//******************************.FUNCTION_HEADER.****************************** 
+//Purpose : Main function for HexDump
+//Inputs  : Filename, width, size, offset 
+//Outputs : 
+//Return  : Validates input and displays HexValue
+//Notes   :
+ 
+//***************************************************************************** 
 int main(int argc, char *argv[])
 {
     // local variables
-    unsigned char* ucpFileName;
-    unsigned char ucBufferVariableSize = DEFAULT_SIZE;
-    unsigned char ucBufferVariableWidth = DEFAULT_WIDTH;
-    unsigned char ucBufferVariableOffset = DEFAULT_OFFSET;
-    unsigned char ucBufferVariable[MAXBUFFER_SIZE];
-    unsigned long ulArguments;
+    FILE* pFile;
+    char* cpFileName;
 
-    static struct option LONG_OPTIONS[] = {
-        {"width",     required_argument, 0, 'w'},
-        {"size",      required_argument, 0, 's'},
-        {"offset",    required_argument, 0, 'o'},
-        {"help",      no_argument,       0, 'h'},
-        {0, 0, 0, 0}
-    };
-    // get the file name
-    ucpFileName = argv[1];
+    LINE_CONFIG LineData;
+    uint8 ucStatus = 0;
+
+    // Initialize default value for line
+    LineData.ucSize = DEFAULT_SIZE;
+    LineData.ucWidth = DEFAULT_WIDTH;
+    LineData.ulOffset = DEFAULT_OFFSET;
+    
+    uint32 ulArguments;
 
     // Get optional inputs Width, offset, size
-    while ((ulArguments = getopt_long(argc, argv, "w:s:o:h:", LONG_OPTIONS, NULL)) != -1)
+    while ((ulArguments = getopt_long(argc, argv, "w:s:o:h", sLongOptions, NULL)) != GETOPT_END)
     {
         switch (ulArguments)
         {
-            case 's':
-                // Get size input
-                ucBufferVariableSize = atoi(optarg);
-                break;
-            case 'w':
-                // Get width input
-                ucBufferVariableWidth = atoi(optarg);
-                break;
-            case 'o':
-                // Get offset input
-                ucBufferVariableOffset = atoi(optarg);
-                break; 
-            case '?': 
-                /* FALL-THRU */           
-            case 'h':
-                printf("Usage: %s filename [--size|-o <size>] "
-                    "[--width|-w <width>] [--offset|-w <offset>] "
-                    "[--help|-h]\n", argv[0]);
-                break;
-            default:
-                abort(); // Should not happen
+        case 's':
+            // Get size input
+            LineData.ucSize = atoi(optarg);
+            break;
+        case 'w':
+            // Get width input
+            LineData.ucWidth = atoi(optarg);
+            break;
+        case 'o':
+            // Get offset input
+            LineData.ulOffset = atoi(optarg);
+            break; 
+        case '?': 
+            /* FALL-THRU */           
+        case 'h':
+            HelpDisplay(argv[0]);
+            return EXIT_FAILURE;
+            break;
+        default:
+            printf("Unexpected error in option parsing.\n");
+            return EXIT_FAILURE;
+            break;
         }
     }
 
-    FILE* pFile;
-    // Open and validate the entered file name
-    pFile = fopen(ucpFileName, "rb");
-    if (pFile == NULL)
+    // get the file name
+    // getopt moves all non-option arguments to the end
+    if (optind < argc)
     {
-        printf("File doesn't exist\n");
-        printf("Usage: %s filename [--size|-o <size>] "
-            "[--width|-w <width>] [--offset|-w <offset>] "
-            "[--help|-h]\n", argv[0]);
-        return 1;
+        cpFileName = argv[optind];
     }
-    
-    // Validate BufferVariableWidth
-    if (BufferWidthValidate(ucBufferVariableWidth, ucBufferVariableSize))
+    else
     {
-        // Error in BufferSize input exit!!
-        return 1;
+        printf("File name is mandatory!\n");
+        HelpDisplay(argv[0]);
+        return EXIT_FAILURE;
     }
 
-    // Hex value print function call
-    HexValuePrint(
-        &ucBufferVariable[0], 
-        ucBufferVariableWidth, 
-        ucBufferVariableSize, 
-        ucBufferVariableOffset, 
-        pFile);
+    // check the validity of Total line length based on input width and size
+    if (BufferWidthValidate(LineData.ucWidth, LineData.ucSize))
+    {
+        // Error in TotalLength input exit!!
+        return EXIT_FAILURE;
+    }
+
+    // Open and validate the entered file name
+    pFile = fopen(cpFileName, "rb");
+    if (NULL == pFile)
+    {
+        printf("Error while opening %s or File does not exist!\n", cpFileName);
+        return EXIT_FAILURE;
+    }
+
+    // HexDump function call
+    HexDump(&LineData, pFile, &ucStatus);
 
     printf("\n");
     fclose(pFile);
