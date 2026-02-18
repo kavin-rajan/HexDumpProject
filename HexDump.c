@@ -24,60 +24,62 @@
 
 //******************************.FUNCTION_HEADER.****************************** 
 //Purpose : To check if the given Total length of characters exeeds 120.
-//Inputs  : ucWidth:width of line, ucSize:Size of a word 
+//Inputs  : ucWidth: width of line, ucSize: Size of a word 
 //Outputs :
-//Return  : returns the validtiy of the total length given.  
+//Return  : TRUE when TotalLength greater than LINE_MAX FALSE otherwise
 //Notes   : TotalLength = ucWidth * ucSize      
  
 //*****************************************************************************
-BOOL BufferWidthValidate(uint8 ucWidth, uint8 ucSize)
+BOOL TotalLengthValidate(uint8 ucWidth, uint8 ucSize)
 {
     // Check Total length validtity
     // TotalLength = ucWidth * ucSize
-    if (((ucWidth * ucSize) >= LINE_MAX))
+    if (((ucWidth * ucSize) > LINE_MAX))
     {
         printf("Total length of the line not in valid range 0 to %d!!\n",
              LINE_MAX);
-        return INVALID;
+        return TRUE;
     }
     else
     {
-        return VALID;
+        return FALSE;
     }
 }
 
 //******************************.FUNCTION_HEADER.******************************
 //Purpose : Prints the Hex data
-//Inputs  : pLineData: input format of the line
-//Outputs : ucStatus: status of hexdump
-//Return  :
+//Inputs  : psLineData: pointer to a struct that contains input format of line. 
+//          pFile: pointer to file to where hex data is stored.
+//Outputs :
+//Return  : NULL_CHECK: if any pointer argument is NULL
+//          FSEEK_ERROR: if any error occurs while function call fseek
+//          FREAD_ERROR: if any error occurs while function call fread
+//          EXIT_SUCCESS: while no error during execution
 //Notes   :
 //***************************************************************************** 
-void HexDump(LINE_CONFIG* pLineData, FILE* pFile, uint8* ucStatus)
+uint8 HexDump(_sLineConfig *psLineData, FILE *pFile)
 {
     // NULL Check
-    if ((NULL == pLineData) || (NULL == pFile))
+    if ((NULL == psLineData) || (NULL == pFile))
     {
         printf("pointer is NULL!\n");
-        *ucStatus = NULL_CHECK;
-        return;
+        return NULL_CHECK;
     }
 
     // Local variables declaration
     uint8 ucNumberOfCharRead = 0;
     uint16 unLineNumber = DEFAULT_INDEX;
-    uint16 unMaxLineLength = (pLineData->ucWidth * pLineData->ucSize);
-    uint16 idx = 0;
+    uint16 unMaxLineLength = (uint16)(psLineData->ucWidth * psLineData->ucSize);
+    uint16 i = 0;
 
     // Jump to the offset location
-    if (fseek(pFile, pLineData->ulOffset, SEEK_SET) != 0)
+    if (fseek(pFile, psLineData->ulOffset, SEEK_SET) != 0)
     {
         printf("error in the input offset\n");
-        *ucStatus = FSEEK_ERROR;
-        return;
+        return FSEEK_ERROR;
     }
 
-    ucNumberOfCharRead = fread(&pLineData->ucDataRead[0], 
+    ucNumberOfCharRead = fread(&psLineData->ucDataRead[0], 
                          sizeof(uint8),
                          unMaxLineLength, pFile);
 
@@ -90,8 +92,7 @@ void HexDump(LINE_CONFIG* pLineData, FILE* pFile, uint8* ucStatus)
             if (ferror(pFile))
             {
                 printf("error while reading file!!\n");
-                *ucStatus = FSEEK_ERROR;
-                return;
+                return FREAD_ERROR;
             }
 
         }
@@ -103,12 +104,12 @@ void HexDump(LINE_CONFIG* pLineData, FILE* pFile, uint8* ucStatus)
         printf("%04d|    ", unLineNumber);
 
         // iterate through the each characters that are read
-        for (idx = 0; idx < unMaxLineLength; idx++)
+        for (i = 0; i < unMaxLineLength; i++)
         {
-            if (idx < (ucNumberOfCharRead * pLineData->ucSize))
+            if (i < (ucNumberOfCharRead * psLineData->ucSize))
             {
                 // Print the read value
-                printf("%02x", pLineData->ucDataRead[idx]);
+                printf("%02x", psLineData->ucDataRead[i]);
             }
             else
             {
@@ -117,7 +118,7 @@ void HexDump(LINE_CONFIG* pLineData, FILE* pFile, uint8* ucStatus)
             }
             
             unCounter ++;
-            if (unCounter == pLineData->ucSize)
+            if (unCounter == psLineData->ucSize)
             {
                 // Print a space for width
                 printf(" ");
@@ -129,33 +130,34 @@ void HexDump(LINE_CONFIG* pLineData, FILE* pFile, uint8* ucStatus)
 
         // Print its ascii value
         printf("     |");
-        for (idx = 0; idx < ucNumberOfCharRead; idx++)
+        for (i = 0; i < ucNumberOfCharRead; i++)
         {
-            printf("%c", isprint(pLineData->ucDataRead[idx]) ?
-                                 pLineData->ucDataRead[idx]: '.');
+            printf("%c", isprint(psLineData->ucDataRead[i]) ?
+                                 psLineData->ucDataRead[i]: '.');
         }
 
         printf("\n");
         unLineNumber++;
 
-        ucNumberOfCharRead = fread(&pLineData->ucDataRead[0],
+        ucNumberOfCharRead = fread(&psLineData->ucDataRead[0],
                              sizeof(uint8),
                              unMaxLineLength, pFile);
     }
+    return EXIT_SUCCESS;
 }
 
 //******************************.FUNCTION_HEADER.****************************** 
 //Purpose : To display help.
-//Inputs  : executable file name.
-//Outputs : displays the help for HexDump executable file. 
-//Return  :
+//Inputs  : pcExecutableName: Executable name
+//Outputs : 
+//Return  : None
 //Notes   :
 //*****************************************************************************
-void HelpDisplay(char* cpFileName)
+void HelpDisplay(char *pcExecutableName)
 {
     printf("Usage: %s filename [--size|-s <size>] "
     "[--width|-w <width>] [--offset|-o <offset>] "
-    "[--help|-h]\n", cpFileName);
+    "[--help|-h]\n", pcExecutableName);
 }
 // EOF 
 

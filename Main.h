@@ -16,10 +16,19 @@
 //******************************* Include Files ******************************* 
 #include <stdbool.h>
 
+#define FALSE 0
+#define TRUE 1
+#define GETOPT_END -1
+#define EXIT_FAILURE 1
+#define EXIT_SUCCESS 0
+
 // Local data type definitions
 typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned long uint32;
+typedef signed char int8;
+typedef signed short int16;
+typedef signed long int32;
 typedef bool BOOL;
 //******************************* Global Types ******************************** 
 

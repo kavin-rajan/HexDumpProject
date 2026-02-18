@@ -33,19 +33,19 @@ const struct option sLongOptions[] = {
 
 //******************************.FUNCTION_HEADER.****************************** 
 //Purpose : Main function for HexDump
-//Inputs  : Filename, width, size, offset 
+//Inputs  : argc: Argument count, argv: Array of Arguments
 //Outputs : 
-//Return  : Validates input and displays HexValue
+//Return  : EXIT_FAILURE if any error occurs EXIT_SUCCESS otherwise
 //Notes   :
  
 //***************************************************************************** 
 int main(int argc, char *argv[])
 {
     // local variables
-    FILE* pFile;
-    char* cpFileName;
+    FILE *pFile;
+    char *cpFileName;
 
-    LINE_CONFIG LineData;
+    _sLineConfig LineData;
     uint8 ucStatus = 0;
 
     // Initialize default value for line
@@ -53,10 +53,10 @@ int main(int argc, char *argv[])
     LineData.ucWidth = DEFAULT_WIDTH;
     LineData.ulOffset = DEFAULT_OFFSET;
     
-    uint32 ulArguments;
+    int32 ulArguments;
 
     // Get optional inputs Width, offset, size
-    while ((ulArguments = getopt_long(argc, argv, "w:s:o:h", sLongOptions, NULL)) != GETOPT_END)
+    while ((ulArguments = (int32)getopt_long(argc, argv, "w:s:o:h", sLongOptions, NULL)) != GETOPT_END)
     {
         switch (ulArguments)
         {
@@ -99,9 +99,10 @@ int main(int argc, char *argv[])
     }
 
     // check the validity of Total line length based on input width and size
-    if (BufferWidthValidate(LineData.ucWidth, LineData.ucSize))
+    if (FALSE != TotalLengthValidate(LineData.ucWidth, LineData.ucSize))
     {
         // Error in TotalLength input exit!!
+        printf("TotalLengthError\n");
         return EXIT_FAILURE;
     }
 
@@ -114,11 +115,32 @@ int main(int argc, char *argv[])
     }
 
     // HexDump function call
-    HexDump(&LineData, pFile, &ucStatus);
+    ucStatus = HexDump(&LineData, pFile);
+    // HexDump status check
+    if (NULL_CHECK == ucStatus)
+    {
+        printf("Argument passed in HexDump is NULL!!\n");
+    }
+    else if (FSEEK_ERROR == ucStatus)
+    {
+        printf("Error while function call fseek!!\n");
+    }
+    else if (FREAD_ERROR == ucStatus)
+    {
+        printf("Error while function call fread!!\n");
+    }
+    else if (EXIT_SUCCESS == ucStatus)
+    {
+        printf("Hex data dump successfull!!\n");
+    }
+    else
+    {
+        printf("Unknown error Status!\n");
+    }
 
     printf("\n");
     fclose(pFile);
-    return 0;
+    return EXIT_SUCCESS;
 }
   
 // EOF 
