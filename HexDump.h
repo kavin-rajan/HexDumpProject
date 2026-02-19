@@ -35,7 +35,7 @@ typedef struct __sLineConfig
 {
     uint8 ucSize;
     uint8 ucWidth;
-    uint32 ulOffset;
+    int32 lOffset;
     uint8 ucDataRead[LINE_MAX];
 } _sLineConfig;
 //***************************** Global Constants ****************************** 

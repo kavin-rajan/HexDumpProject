@@ -35,7 +35,8 @@ const struct option sLongOptions[] = {
 //Purpose : Main function for HexDump
 //Inputs  : argc: Argument count, argv: Array of Arguments
 //Outputs : 
-//Return  : EXIT_FAILURE if any error occurs EXIT_SUCCESS otherwise
+//Return  : EXIT_FAILURE if any error occurs 
+//          EXIT_SUCCESS otherwise
 //Notes   :
  
 //***************************************************************************** 
@@ -47,30 +48,29 @@ int main(int argc, char *argv[])
 
     _sLineConfig LineData;
     uint8 ucStatus = 0;
-
+    int32 lArguments = 0;
     // Initialize default value for line
     LineData.ucSize = DEFAULT_SIZE;
     LineData.ucWidth = DEFAULT_WIDTH;
-    LineData.ulOffset = DEFAULT_OFFSET;
+    LineData.lOffset = DEFAULT_OFFSET;
     
-    int32 ulArguments;
 
     // Get optional inputs Width, offset, size
-    while ((ulArguments = (int32)getopt_long(argc, argv, "w:s:o:h", sLongOptions, NULL)) != GETOPT_END)
+    while ((lArguments = (int32)getopt_long(argc, argv, "w:s:o:h", sLongOptions, NULL)) != GETOPT_END)
     {
-        switch (ulArguments)
+        switch ((uint8)lArguments)
         {
         case 's':
             // Get size input
-            LineData.ucSize = atoi(optarg);
+            LineData.ucSize = (uint8)atoi(optarg);
             break;
         case 'w':
             // Get width input
-            LineData.ucWidth = atoi(optarg);
+            LineData.ucWidth = (uint8)atoi(optarg);
             break;
         case 'o':
             // Get offset input
-            LineData.ulOffset = atoi(optarg);
+            LineData.lOffset = (int32)atoi(optarg);
             break; 
         case '?': 
             /* FALL-THRU */           
@@ -99,10 +99,10 @@ int main(int argc, char *argv[])
     }
 
     // check the validity of Total line length based on input width and size
-    if (FALSE != TotalLengthValidate(LineData.ucWidth, LineData.ucSize))
+    if (FALSE == TotalLengthValidate(LineData.ucWidth, LineData.ucSize))
     {
         // Error in TotalLength input exit!!
-        printf("TotalLengthError\n");
+        printf("TotalLength Error\n");
         return EXIT_FAILURE;
     }
 

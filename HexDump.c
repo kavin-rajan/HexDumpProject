@@ -24,9 +24,10 @@
 
 //******************************.FUNCTION_HEADER.****************************** 
 //Purpose : To check if the given Total length of characters exeeds 120.
-//Inputs  : ucWidth: width of line, ucSize: Size of a word 
+//Inputs  : ucWidth: width of line. ucSize: Size of a word 
 //Outputs :
-//Return  : TRUE when TotalLength greater than LINE_MAX FALSE otherwise
+//Return  : FALSE when TotalLength greater than LINE_MAX 
+//          TRUE otherwise
 //Notes   : TotalLength = ucWidth * ucSize      
  
 //*****************************************************************************
@@ -38,11 +39,11 @@ BOOL TotalLengthValidate(uint8 ucWidth, uint8 ucSize)
     {
         printf("Total length of the line not in valid range 0 to %d!!\n",
              LINE_MAX);
-        return TRUE;
+        return FALSE;
     }
     else
     {
-        return FALSE;
+        return TRUE;
     }
 }
 
@@ -62,51 +63,47 @@ uint8 HexDump(_sLineConfig *psLineData, FILE *pFile)
     // NULL Check
     if ((NULL == psLineData) || (NULL == pFile))
     {
-        printf("pointer is NULL!\n");
         return NULL_CHECK;
     }
 
     // Local variables declaration
-    uint8 ucNumberOfCharRead = 0;
+    uint32 ulNumberOfCharRead = 0;
     uint16 unLineNumber = DEFAULT_INDEX;
-    uint16 unMaxLineLength = (uint16)(psLineData->ucWidth * psLineData->ucSize);
-    uint16 i = 0;
+    uint32 ulMaxLineLength = (uint32)psLineData->ucWidth * (uint32)psLineData->ucSize;
+    uint32 i = 0;
+    uint16 unCounter = 0;
 
     // Jump to the offset location
-    if (fseek(pFile, psLineData->ulOffset, SEEK_SET) != 0)
+    if (fseek(pFile, psLineData->lOffset, SEEK_SET) != 0)
     {
-        printf("error in the input offset\n");
+        // error handle when the offset is negative
         return FSEEK_ERROR;
     }
 
-    ucNumberOfCharRead = fread(&psLineData->ucDataRead[0], 
+    ulNumberOfCharRead = fread(&psLineData->ucDataRead[0], 
                          sizeof(uint8),
-                         unMaxLineLength, pFile);
+                         ulMaxLineLength, pFile);
 
-    while (ucNumberOfCharRead > 0)
+    while (ulNumberOfCharRead > 0)
     {
         // fread error check
-        if (ucNumberOfCharRead < unMaxLineLength)
+        if (ulNumberOfCharRead < ulMaxLineLength)
         {
             // Check if an error occured
             if (ferror(pFile))
             {
-                printf("error while reading file!!\n");
                 return FREAD_ERROR;
             }
 
         }
-
-        // Local variables
-        uint16 unCounter = 0;
-
+        
         // Print the Line number
         printf("%04d|    ", unLineNumber);
 
         // iterate through the each characters that are read
-        for (i = 0; i < unMaxLineLength; i++)
+        for (i = 0; i < ulMaxLineLength; i++)
         {
-            if (i < (ucNumberOfCharRead * psLineData->ucSize))
+            if (i < (ulNumberOfCharRead * psLineData->ucSize))
             {
                 // Print the read value
                 printf("%02x", psLineData->ucDataRead[i]);
@@ -130,18 +127,18 @@ uint8 HexDump(_sLineConfig *psLineData, FILE *pFile)
 
         // Print its ascii value
         printf("     |");
-        for (i = 0; i < ucNumberOfCharRead; i++)
+        for (i = 0; i < ulNumberOfCharRead; i++)
         {
             printf("%c", isprint(psLineData->ucDataRead[i]) ?
                                  psLineData->ucDataRead[i]: '.');
         }
 
         printf("\n");
-        unLineNumber++;
+        unLineNumber ++;
 
-        ucNumberOfCharRead = fread(&psLineData->ucDataRead[0],
+        ulNumberOfCharRead = fread(&psLineData->ucDataRead[0],
                              sizeof(uint8),
-                             unMaxLineLength, pFile);
+                             ulMaxLineLength, pFile);
     }
     return EXIT_SUCCESS;
 }
